@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Search</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- React CDN Scripts -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Additional styles for categories */
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .category-button {
+            padding: 10px 16px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        
+        .category-button:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        
+        .category-button.active {
+            background-color: #4a6fa5;
+            color: white;
+            border-color: #4a6fa5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-emoji {
+            margin-right: 5px;
+        }
+        
+        /* Add animation for copy tooltip */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, 10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- Embedding JavaScript directly to avoid CORS issues -->
+    <script type="text/babel">
+        // Emoji data array with categories and more recent emojis
+        const emojiData = [
+            // Smileys & Emotion
+            { emoji: "😀", name: "Grinning Face", category: "smileys" },
+            { emoji: "😃", name: "Grinning Face with Big Eyes", category: "smileys" },
+            { emoji: "😄", name: "Grinning Face with Smiling Eyes", category: "smileys" },
+            { emoji: "😁", name: "Beaming Face with Smiling Eyes", category: "smileys" },
+            { emoji: "😆", name: "Grinning Squinting Face", category: "smileys" },
+            { emoji: "😅", name: "Grinning Face with Sweat", category: "smileys" },
+            { emoji: "🤣", name: "Rolling on the Floor Laughing", category: "smileys" },
+            { emoji: "😂", name: "Face with Tears of Joy", category: "smileys" },
+            { emoji: "🙂", name: "Slightly Smiling Face", category: "smileys" },
+            { emoji: "🙃", name: "Upside-Down Face", category: "smileys" },
+            { emoji: "🫠", name: "Melting Face", category: "smileys" },
+            { emoji: "😉", name: "Winking Face", category: "smileys" },
+            { emoji: "😊", name: "Smiling Face with Smiling Eyes", category: "smileys" },
+            { emoji: "😇", name: "Smiling Face with Halo", category: "smileys" },
+            { emoji: "🥰", name: "Smiling Face with Hearts", category: "smileys" },
+            { emoji: "😍", name: "Smiling Face with Heart-Eyes", category: "smileys" },
+            { emoji: "🤩", name: "Star-Struck", category: "smileys" },
+            { emoji: "😘", name: "Face Blowing a Kiss", category: "smileys" },
+            { emoji: "😗", name: "Kissing Face", category: "smileys" },
+            { emoji: "😚", name: "Kissing Face with Closed Eyes", category: "smileys" },
+            { emoji: "😙", name: "Kissing Face with Smiling Eyes", category: "smileys" },
+            { emoji: "🥲", name: "Smiling Face with Tear", category: "smileys" },
+            { emoji: "😋", name: "Face Savoring Food", category: "smileys" },
+            { emoji: "😛", name: "Face with Tongue", category: "smileys" },
+            { emoji: "😜", name: "Winking Face with Tongue", category: "smileys" },
+            { emoji: "🤪", name: "Zany Face", category: "smileys" },
+            { emoji: "😝", name: "Squinting Face with Tongue", category: "smileys" },
+            { emoji: "🤑", name: "Money-Mouth Face", category: "smileys" },
+            { emoji: "🤗", name: "Hugging Face", category: "smileys" },
+            { emoji: "🤭", name: "Face with Hand Over Mouth", category: "smileys" },
+            { emoji: "🫢", name: "Face with Open Eyes and Hand Over Mouth", category: "smileys" },
+            { emoji: "🫣", name: "Face with Peeking Eye", category: "smileys" },
+            { emoji: "🤫", name: "Shushing Face", category: "smileys" },
+            { emoji: "🤔", name: "Thinking Face", category: "smileys" },
+            
+            // Negative Emotions
+            { emoji: "😐", name: "Neutral Face", category: "negative" },
+            { emoji: "😑", name: "Expressionless Face", category: "negative" },
+            { emoji: "😶", name: "Face Without Mouth", category: "negative" },
+            { emoji: "🫥", name: "Dotted Line Face", category: "negative" },
+            { emoji: "😏", name: "Smirking Face", category: "negative" },
+            { emoji: "😒", name: "Unamused Face", category: "negative" },
+            { emoji: "🙄", name: "Face with Rolling Eyes", category: "negative" },
+            { emoji: "😬", name: "Grimacing Face", category: "negative" },
+            { emoji: "🫨", name: "Shaking Face", category: "negative" },
+            { emoji: "🤥", name: "Lying Face", category: "negative" },
+            { emoji: "😌", name: "Relieved Face", category: "negative" },
+            { emoji: "😔", name: "Pensive Face", category: "negative" },
+            { emoji: "😪", name: "Sleepy Face", category: "negative" },
+            { emoji: "🤤", name: "Drooling Face", category: "negative" },
+            { emoji: "😴", name: "Sleeping Face", category: "negative" },
+            { emoji: "😷", name: "Face with Medical Mask", category: "negative" },
+            { emoji: "🤒", name: "Face with Thermometer", category: "negative" },
+            { emoji: "🤕", name: "Face with Head-Bandage", category: "negative" },
+            { emoji: "🤢", name: "Nauseated Face", category: "negative" },
+            { emoji: "🤮", name: "Face Vomiting", category: "negative" },
+            { emoji: "🤧", name: "Sneezing Face", category: "negative" },
+            { emoji: "🥵", name: "Hot Face", category: "negative" },
+            { emoji: "🥶", name: "Cold Face", category: "negative" },
+            { emoji: "🥴", name: "Woozy Face", category: "negative" },
+            { emoji: "😵", name: "Dizzy Face", category: "negative" },
+            { emoji: "🤯", name: "Exploding Head", category: "negative" },
+            { emoji: "🥱", name: "Yawning Face", category: "negative" },
+            
+            // People & Body
+            { emoji: "👋", name: "Waving Hand", category: "people" },
+            { emoji: "🤚", name: "Raised Back of Hand", category: "people" },
+            { emoji: "✋", name: "Raised Hand", category: "people" },
+            { emoji: "🖖", name: "Vulcan Salute", category: "people" },
+            { emoji: "🫱", name: "Rightwards Hand", category: "people" },
+            { emoji: "🫲", name: "Leftwards Hand", category: "people" },
+            { emoji: "🫳", name: "Palm Down Hand", category: "people" },
+            { emoji: "🫴", name: "Palm Up Hand", category: "people" },
+            { emoji: "👌", name: "OK Hand", category: "people" },
+            { emoji: "🤌", name: "Pinched Fingers", category: "people" },
+            { emoji: "🤏", name: "Pinching Hand", category: "people" },
+            { emoji: "✌️", name: "Victory Hand", category: "people" },
+            { emoji: "🤞", name: "Crossed Fingers", category: "people" },
+            { emoji: "🫰", name: "Hand with Index Finger and Thumb Crossed", category: "people" },
+            { emoji: "🤟", name: "Love-You Gesture", category: "people" },
+            { emoji: "🤘", name: "Sign of the Horns", category: "people" },
+            { emoji: "👍", name: "Thumbs Up", category: "people" },
+            { emoji: "👎", name: "Thumbs Down", category: "people" },
+            { emoji: "👏", name: "Clapping Hands", category: "people" },
+            { emoji: "🙌", name: "Raising Hands", category: "people" },
+            { emoji: "👐", name: "Open Hands", category: "people" },
+            { emoji: "🤲", name: "Palms Up Together", category: "people" },
+            
+            // Animals & Nature
+            { emoji: "🐶", name: "Dog Face", category: "animals" },
+            { emoji: "🐱", name: "Cat Face", category: "animals" },
+            { emoji: "🐭", name: "Mouse Face", category: "animals" },
+            { emoji: "🐹", name: "Hamster Face", category: "animals" },
+            { emoji: "🐰", name: "Rabbit Face", category: "animals" },
+            { emoji: "🦊", name: "Fox Face", category: "animals" },
+            { emoji: "🐻", name: "Bear Face", category: "animals" },
+            { emoji: "🐼", name: "Panda Face", category: "animals" },
+            { emoji: "🦁", name: "Lion Face", category: "animals" },
+            { emoji: "🐮", name: "Cow Face", category: "animals" },
+            { emoji: "🐷", name: "Pig Face", category: "animals" },
+            { emoji: "🐸", name: "Frog Face", category: "animals" },
+            { emoji: "🐵", name: "Monkey Face", category: "animals" },
+            { emoji: "🐔", name: "Chicken", category: "animals" },
+            { emoji: "🦄", name: "Unicorn", category: "animals" },
+            { emoji: "🦖", name: "T-Rex", category: "animals" },
+            { emoji: "🐢", name: "Turtle", category: "animals" },
+            { emoji: "🦋", name: "Butterfly", category: "animals" },
+            { emoji: "🐙", name: "Octopus", category: "animals" },
+            
+            // Food & Drink
+            { emoji: "🍎", name: "Red Apple", category: "food" },
+            { emoji: "🍐", name: "Pear", category: "food" },
+            { emoji: "🍊", name: "Tangerine", category: "food" },
+            { emoji: "🍋", name: "Lemon", category: "food" },
+            { emoji: "🍌", name: "Banana", category: "food" },
+            { emoji: "🍉", name: "Watermelon", category: "food" },
+            { emoji: "🍇", name: "Grapes", category: "food" },
+            { emoji: "🍓", name: "Strawberry", category: "food" },
+            { emoji: "🫐", name: "Blueberries", category: "food" },
+            { emoji: "🥭", name: "Mango", category: "food" },
+            { emoji: "🍍", name: "Pineapple", category: "food" },
+            { emoji: "🥥", name: "Coconut", category: "food" },
+            { emoji: "🥑", name: "Avocado", category: "food" },
+            { emoji: "🍔", name: "Hamburger", category: "food" },
+            { emoji: "🍟", name: "French Fries", category: "food" },
+            { emoji: "🍕", name: "Pizza", category: "food" },
+            { emoji: "🌮", name: "Taco", category: "food" },
+            { emoji: "🥪", name: "Sandwich", category: "food" },
+            { emoji: "🍦", name: "Soft Ice Cream", category: "food" },
+            { emoji: "🧁", name: "Cupcake", category: "food" },
+            
+            // Objects
+            { emoji: "⌚", name: "Watch", category: "objects" },
+            { emoji: "📱", name: "Mobile Phone", category: "objects" },
+            { emoji: "💻", name: "Laptop", category: "objects" },
+            { emoji: "⌨️", name: "Keyboard", category: "objects" },
+            { emoji: "🖥️", name: "Desktop Computer", category: "objects" },
+            { emoji: "🖨️", name: "Printer", category: "objects" },
+            { emoji: "📷", name: "Camera", category: "objects" },
+            { emoji: "🎮", name: "Video Game", category: "objects" },
+            { emoji: "💡", name: "Light Bulb", category: "objects" },
+            { emoji: "🔋", name: "Battery", category: "objects" },
+            { emoji: "🧸", name: "Teddy Bear", category: "objects" },
+            { emoji: "🎁", name: "Wrapped Gift", category: "objects" },
+            { emoji: "📚", name: "Books", category: "objects" },
+            { emoji: "📝", name: "Memo", category: "objects" },
+            { emoji: "✏️", name: "Pencil", category: "objects" },
+            
+            // Symbols
+            { emoji: "❤️", name: "Red Heart", category: "symbols" },
+            { emoji: "🧡", name: "Orange Heart", category: "symbols" },
+            { emoji: "💛", name: "Yellow Heart", category: "symbols" },
+            { emoji: "💚", name: "Green Heart", category: "symbols" },
+            { emoji: "💙", name: "Blue Heart", category: "symbols" },
+            { emoji: "💜", name: "Purple Heart", category: "symbols" },
+            { emoji: "🖤", name: "Black Heart", category: "symbols" },
+            { emoji: "🤍", name: "White Heart", category: "symbols" },
+            { emoji: "🤎", name: "Brown Heart", category: "symbols" },
+            { emoji: "💔", name: "Broken Heart", category: "symbols" },
+            { emoji: "❣️", name: "Heart Exclamation", category: "symbols" },
+            { emoji: "💕", name: "Two Hearts", category: "symbols" },
+            { emoji: "💯", name: "Hundred Points", category: "symbols" },
+            { emoji: "✨", name: "Sparkles", category: "symbols" },
+            { emoji: "🎉", name: "Party Popper", category: "symbols" },
+            { emoji: "🏆", name: "Trophy", category: "symbols" },
+            { emoji: "🔥", name: "Fire", category: "symbols" },
+            
+            // Newest Emojis
+            { emoji: "🥹", name: "Face Holding Back Tears", category: "newest" },
+            { emoji: "🫠", name: "Melting Face", category: "newest" },
+            { emoji: "🫢", name: "Face with Open Eyes and Hand Over Mouth", category: "newest" },
+            { emoji: "🫣", name: "Face with Peeking Eye", category: "newest" },
+            { emoji: "🫥", name: "Dotted Line Face", category: "newest" },
+            { emoji: "🫡", name: "Saluting Face", category: "newest" },
+            { emoji: "🫱", name: "Rightwards Hand", category: "newest" },
+            { emoji: "🫲", name: "Leftwards Hand", category: "newest" },
+            { emoji: "🫳", name: "Palm Down Hand", category: "newest" },
+            { emoji: "🫴", name: "Palm Up Hand", category: "newest" },
+            { emoji: "🫰", name: "Hand with Index Finger and Thumb Crossed", category: "newest" },
+            { emoji: "🫵", name: "Pointing at the Viewer", category: "newest" },
+            { emoji: "🫶", name: "Heart Hands", category: "newest" },
+            { emoji: "🫦", name: "Biting Lip", category: "newest" },
+            { emoji: "🫧", name: "Bubbles", category: "newest" },
+            { emoji: "🫨", name: "Shaking Face", category: "newest" },
+            { emoji: "🩵", name: "Light Blue Heart", category: "newest" },
+            { emoji: "🩶", name: "Grey Heart", category: "newest" },
+            { emoji: "🩷", name: "Pink Heart", category: "newest" },
+            { emoji: "🪇", name: "Maracas", category: "newest" },
+            { emoji: "🪈", name: "Flute", category: "newest" },
+            { emoji: "🪯", name: "Khanda", category: "newest" },
+            { emoji: "🛜", name: "Wireless", category: "newest" },
+            { emoji: "🪽", name: "Wing", category: "newest" },
+            { emoji: "🪿", name: "Goose", category: "newest" },
+            { emoji: "🫎", name: "Moose", category: "newest" },
+            { emoji: "🫏", name: "Donkey", category: "newest" },
+            { emoji: "🫛", name: "Hyacinth", category: "newest" },
+        ];
+
+        // Define categories with icons
+        const categories = [
+            { id: "all", name: "All", emoji: "🌟" },
+            { id: "smileys", name: "Smileys", emoji: "😊" },
+            { id: "negative", name: "Emotions", emoji: "😔" },
+            { id: "people", name: "People", emoji: "👋" },
+            { id: "animals", name: "Animals", emoji: "🐱" },
+            { id: "food", name: "Food", emoji: "🍔" },
+            { id: "objects", name: "Objects", emoji: "📱" },
+            { id: "symbols", name: "Symbols", emoji: "❤️" },
+            { id: "newest", name: "Newest", emoji: "✨" },
+        ];
+
+        // Main App Component
+        function App() {
+            const [searchTerm, setSearchTerm] = React.useState("");
+            const [copyStatus, setCopyStatus] = React.useState(null); // Changed to store emoji and index
+            const [activeCategory, setActiveCategory] = React.useState("all");
+            
+            // Filter emojis based on search term and active category
+            const filteredEmojis = emojiData.filter(emoji => {
+                const matchesSearch = 
+                    emoji.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    emoji.emoji.includes(searchTerm);
+                    
+                const matchesCategory = activeCategory === "all" || emoji.category === activeCategory;
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            // Handle search input change
+            const handleSearchChange = (e) => {
+                setSearchTerm(e.target.value);
+                setActiveCategory("all"); // Reset category to "all" when searching
+            };
+            
+            // Handle category change
+            const handleCategoryChange = (categoryId) => {
+                setActiveCategory(categoryId);
+                setSearchTerm(""); // Clear the search term when a category is selected
+            };
+            
+            // Handle emoji click (copy to clipboard)
+            const handleEmojiClick = (emoji, index) => {
+                navigator.clipboard.writeText(emoji)
+                    .then(() => {
+                        setCopyStatus({emoji, index}); // Store which emoji was copied
+                        setTimeout(() => setCopyStatus(null), 1500);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert("Failed to copy emoji");
+                    });
+            };
+            
+            return (
+                <div className="container">
+                    <h1>
+                        <span style={{ color: '#4a6fa5' }}>Emoji</span> 
+                        <span style={{ backgroundColor: '#4a6fa5', color: 'white', padding: '4px 12px', borderRadius: '20px', marginLeft: '8px' }}>Search</span>
+                    </h1>
+                    
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search for emoji..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    
+                    <div className="category-filters">
+                        {categories.map(category => (
+                            <button
+                                key={category.id}
+                                className={`category-button ${activeCategory === category.id ? 'active' : ''}`}
+                                onClick={() => handleCategoryChange(category.id)}
+                            >
+                                <span className="category-emoji">{category.emoji}</span>
+                                {category.name}
+                            </button>
+                        ))}
+                    </div>
+                    
+                    {filteredEmojis.length > 0 ? (
+                        <div className="emoji-list">
+                            {filteredEmojis.map((item, index) => (
+                                <div 
+                                    key={index} 
+                                    className="emoji-item"
+                                    onClick={() => handleEmojiClick(item.emoji, index)}
+                                    style={{ position: 'relative' }}
+                                >
+                                    {copyStatus && copyStatus.index === index && (
+                                        <div style={{ 
+                                            position: 'absolute', 
+                                            top: '-30px', 
+                                            left: '50%', 
+                                            transform: 'translateX(-50%)',
+                                            backgroundColor: '#4CAF50',
+                                            color: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '12px',
+                                            whiteSpace: 'nowrap',
+                                            animation: 'fadeIn 0.3s'
+                                        }}>
+                                            Copied!
+                                        </div>
+                                    )}
+                                    <span className="emoji">{item.emoji}</span>
+                                    <span className="emoji-name">{item.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="no-results">
+                            No emojis found for "{searchTerm}" in the selected category
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Update to React 18's createRoot API
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html> 
